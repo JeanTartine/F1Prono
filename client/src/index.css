@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@tailwind utilities;
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: "Poppins", sans-serif;
+  background: #010e1e;
+  color: #f3f4f6;
+}
+
+@theme {
+  --color-back-dark: #010e1e;
+}
