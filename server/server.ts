@@ -1,7 +1,8 @@
-import express from 'express';
+import express, {NextFunction, Request, Response} from 'express';
 import cors from 'cors';
-import pool from './database.js';
 import groupRoutes from "./src/routes/groupRoutes";
+import betRoutes from "./src/routes/betRoutes";
+import playerRoutes from "./src/routes/playerRoutes";
 const corsOptions = {
 }
 
@@ -14,19 +15,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ROUTES
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to F1Prono API' });
-});
-
 app.use("/group", groupRoutes)
-app.get('/players', (request, response) => {
-  pool.query('SELECT * FROM player ORDER BY id ASC', (error, results) => {
-    if (error) {
-      throw error
-    }
-    response.status(200).json(results.rows)
-  })
-});
+app.use("/bet", betRoutes)
+app.use("/player", playerRoutes)
 
 // GUARD ROUTES
 app.use((req, res, next) => {
@@ -37,7 +28,7 @@ app.use((req, res, next) => {
   next(error);
 });
 
-app.use((error, req, res, next) => {
+app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   res.status(error.status || 500);
   console.log("ERROR", error);
   res.json({
@@ -46,14 +37,6 @@ app.use((error, req, res, next) => {
       status: error.status,
     },
   });
-});
-
-// POST ENDPOINTS
-app.post('/group', (request, response) => {
-  const newGroup = {
-    groupName: request.body.name,
-  }
-  pool.pus
 });
 
 // Start server
