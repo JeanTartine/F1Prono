@@ -12,21 +12,9 @@ export const playerApi =  {
         })
     },
     getPlayerById: async (playerId: string) => {
-        return await f1PronoApi.get('player/{playerId}', {
-            params: {
-                path: {
-                    playerId
-                }
-            }
-        })
+        return await f1PronoApi.get(`player/${playerId}`)
     },
     getPlayersByGroup: async (groupId: string) => {
-        return await f1PronoApi.get('player/group/{playerId}', {
-            params: {
-                path: {
-                    groupId
-                }
-            }
-        })
+        return await f1PronoApi.get(`player/group/${groupId}`)
     }
 }

@@ -4,7 +4,7 @@ export const betApi = {
     postPlayerBet: async (
         raceName: string,
         position: number,
-        driverId: number,
+        driverId: string,
         playerId: number,
         groupId: number
     ) => {
@@ -17,13 +17,6 @@ export const betApi = {
         })
     },
     getAllPlayerBetsForGroup: async (groupId: string, playerId: string) => {
-        return await f1PronoApi.get(`bet/group/{groupId}/player/{playerId}`, {
-            params: {
-                path: {
-                    groupId,
-                    playerId
-                }
-            }
-        })
+        return await f1PronoApi.get(`bet/group/${groupId}/player/${playerId}`)
     }
 }

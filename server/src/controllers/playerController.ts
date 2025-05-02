@@ -55,6 +55,7 @@ export async function postPlayer(req: Request, res: Response) {
         )
         res.status(200).json('Player created');
     } catch (e) {
+        console.error(e);
         res.status(500).send(`Error while trying to create new player`)
     }
 }

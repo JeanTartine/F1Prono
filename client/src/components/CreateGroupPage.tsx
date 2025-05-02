@@ -1,15 +1,25 @@
-import {usePlayerApi} from "../hooks/usePlayerApi.ts";
+import {useAddBet} from "../hooks/usePostBet.ts";
 
 export const CreateGroupPage = () => {
 
-    const {createPlayer} = usePlayerApi()
+
+    const addBet = useAddBet()
 
     return (
         <div>
-            {createPlayer.isPending ? (
-                <h4>'Adding player...'</h4>
+            {false ? (
+                <h4>'Loading query'</h4>
             ) : (
-                <button onClick={() => createPlayer.mutate('Test')}>Add New Player</button>
+                <button onClick={() => {
+                    addBet.mutate({
+                        raceName: 'vroum',
+                        position: 1,
+                        driverId: 'PIA',
+                        playerId: 1,
+                        groupId: 1
+                    });
+                }}>
+                    Console query result</button>
             )}
         </div>
     )
