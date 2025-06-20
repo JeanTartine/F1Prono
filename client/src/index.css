@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@plugin "daisyui";
 @tailwind utilities;
 
 html, body {
@@ -14,4 +14,5 @@ html, body {
 
 @theme {
   --color-back-dark: #010e1e;
+  --color-font-light: #1e2939;
 }

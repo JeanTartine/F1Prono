@@ -1,5 +1,5 @@
 export type BetResult = {
-    id: string;
+    _id: string;
     longestStreak: number;
     correctGuesses: number;
     score: number;

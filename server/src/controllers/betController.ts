@@ -1,39 +1,115 @@
-import { Request, Response } from 'express';
-import {QueryResult} from "pg";
-import {Bet} from "../models/Bet";
-import pool from "../../database";
+import {Request, Response} from 'express';
+import * as BetModel from "../models/Bet";
+import {Bet, BetGroup, BetLine, Player} from "../db/schema";
+import mongoose from "mongoose";
 
-export async function getAllPlayerBetsForGroup(req: Request, res: Response): Promise<void> {
-    const groupId = Number(req.params.groupId)
-    const playerId = Number(req.params.groupId)
+
+export async function getAllBetsFromGroup(req: Request, res: Response): Promise<void> {
+    const groupId = req.params.groupId
     try {
-        const result: QueryResult = await pool.query(
-            'SELECT * FROM bet INNER JOIN bet_group ON bet.bet_group_id = bet_group.id ' +
-            'INNER JOIN player ON bet.player_id = player.id ' +
-            'WHERE bet_group.id = $1 AND player.id = $2 ',
-            [groupId, playerId]
-        );
-
-        if(result.rows.length > 0) {
-            const betGroup = result.rows as Bet[];
-            res.status(200).json(betGroup);
-        } else {
-            res.status(404).send('Not Bets Found')
+        const exists = BetGroup.exists({_id: groupId})
+        if (!exists) {
+            throw new Error("BetGroup does not exist");
         }
-    } catch (e) {
-        res.status(500).send(`Erro*r while trying to get the bets for player ${playerId} in group ${groupId}`)
+        const bet = await Bet
+            .find({betGroup: groupId})
+            .populate({
+                path: 'betLines',
+                populate: ('driver')
+            })
+            .populate("player")
+            .populate("betResult")
+            .exec()
+        res.status(200).json(bet);
+    } catch (e: any) {
+        res.status(500).send(`Error while trying to get the bets for group ${groupId}: ${e.message}`)
     }
 }
 
+export async function getABet(req: Request, res: Response): Promise<void> {
+    try {
+        const betId = req.params.betId
+        const bet = await Bet
+            .findById(betId)
+            .populate({
+                path: 'betLines',
+                populate: ('driver')
+            })
+            .populate("player")
+            .populate("betGroup")
+            .populate("betResult")
+            .exec()
+        res.status(200).json(bet);
+    } catch (e) {
+        res.status(500).send(`Error while trying to get bet lines: ` + e)
+    }
+}
+
+
 export async function postPlayerBet(req: Request, res: Response): Promise<void> {
     try {
-        const {raceName, position, driverId, playerId, groupId} = req.body;
-        await pool.query(
-            'INSERT INTO bet(race_name, position, driver_id, bet_group_id, player_id) VALUES($1, $2, $3, $4, $5)',
-            [raceName, position, driverId, groupId, playerId]
-        )
-        res.status(200).json('Bet created')
-    } catch (e) {
-        res.status(500).send(`Error while trying to create new bet`)
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+
+        const betRequest: BetModel.Bet = req.body;
+        const newBet = new Bet({
+            raceName: betRequest.raceName,
+            player: betRequest.playerId,
+            betGroup: betRequest.groupId,
+            betResult: betRequest?.resultId,
+            betLines: []
+        })
+
+        // Check if Player and BetGroup exist
+        const [playerExists, betGroupExists] = await Promise.all([
+            Player.exists({_id: betRequest.playerId}),
+            BetGroup.exists({_id: betRequest.groupId})
+        ]);
+
+        if (!playerExists) {
+            throw new Error(`The player ${betRequest.playerId} doesn't exist`)
+        }
+
+        if (!betGroupExists) {
+            throw new Error(`The group ${betRequest.groupId} doesn't exist`)
+        }
+
+        // Save the Bet to get its _id
+        await newBet.save({session});
+
+        //Create BetLines with reference to the new Bet
+        const betLinePromises = betRequest.betLines.map(lineData => {
+            const betLine = new BetLine({
+                driver: lineData.driverId,
+                position: lineData.position,
+                driverStatus: lineData.driverStatus,
+                bet: newBet._id // Reference to the Bet
+            });
+            return betLine.save({session});
+        });
+
+        const savedBetLines = await Promise.all(betLinePromises);
+
+        //Update the Bet with references to BetLines
+        newBet.betLines = savedBetLines.map(line => line._id);
+        await newBet.save({session});
+
+        // Commit the transaction
+        await session.commitTransaction();
+        await session.endSession();
+
+        // Return the Bet
+        const populatedBet = await Bet.findById(newBet._id)
+            .populate({
+                path: 'betLines',
+                populate: ('driver')
+            })
+            .populate('betResult')
+            .exec();
+
+        res.status(200).json(populatedBet)
+    } catch (e: any) {
+        res.status(500).send(`Error while trying to create new bet: ${e.message}`)
     }
 }

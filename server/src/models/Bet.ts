@@ -1,9 +1,10 @@
+import {BetLine} from "./BetLine";
+
 export type Bet = {
-    id: number;
+    id: string;
     raceName: string;
-    position: number;
-    driverId: string;
     playerId: number;
     groupId: number;
     resultId: number;
+    betLines: BetLine[]
 }

@@ -1,5 +1,5 @@
 import {useQuery} from "@tanstack/react-query";
-import {playerApi} from "../api/player/playerApi.ts";
+import {playerApi} from "../api/playerApi.ts";
 
 const useGetPlayerById = (playerId: string) => {
     return useQuery({

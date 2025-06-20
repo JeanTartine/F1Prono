@@ -1,7 +1,7 @@
 import {Player} from "./Player";
 
 export type BetGroup = {
-    id: string;
-    groupName: string;
+    _id: string;
+    name: string;
     players: Player[];
 }

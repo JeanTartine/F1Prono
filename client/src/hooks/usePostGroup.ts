@@ -1,12 +1,12 @@
 import {useMutation} from "@tanstack/react-query";
-import {groupApi} from "../api/player/groupApi.ts";
+import {groupApi} from "../api/groupApi.ts";
 
 const useAddGroup = () => {
     return useMutation({
-        mutationFn: (groupName: string) => groupApi.postGroup(groupName),
+        mutationFn: ({groupName, playerId}: {groupName: string, playerId: string}) =>
+            groupApi.postGroup(groupName, playerId),
         onSuccess: (res) => {
-            console.log(res)
-            return res
+            return res.data
         },
         onError: (err) => {
             console.log(err)

@@ -1,4 +1,4 @@
-import {f1PronoApi} from "../../core/libs/axios/axiosConfig.ts";
+import {f1PronoApi} from "../core/libs/axios/axiosConfig.ts";
 
 
 export const playerApi =  {

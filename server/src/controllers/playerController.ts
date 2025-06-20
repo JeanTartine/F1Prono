@@ -1,61 +1,45 @@
-import { Request, Response } from 'express';
-import pool from "../../database";
-import {QueryResult} from "pg";
-import {Player} from "../models/Player";
-
+import {Request, Response} from 'express';
+import {BetGroup, Player} from '../db/schema'
 
 export async function getPlayerById(req: Request, res: Response) {
-    const playerId = Number(req.params.playerId)
-
+    const playerId = req.params.playerId
     try {
-        const result: QueryResult = await pool.query(
-            'SELECT * FROM player WHERE id = $1',
-            [playerId]
-        )
-
-        if (result.rows.length > 0) {
-            const players = result.rows[0] as Player;
-            res.status(200).json(players);
+        const player = await Player.findById(playerId)
+        if (player) {
+            res.status(200).json(player);
         } else {
-            res.status(404).send(`No player found for the group with id ${playerId}`);
+            res.status(404).send(`No player found with id ${playerId}`);
         }
     } catch (error) {
-        res.status(500).send(`Error while trying to retrieve player with id ${playerId}`);
+        res.status(500).send(`Error while trying to retrieve player with id ${playerId} : ` + error);
     }
 }
 
-export async function getPlayersByGroup(req: Request, res: Response) {
-    const groupId = Number(req.params.groupId)
-
+export async function getGroupsByPlayerId(req: Request, res: Response) {
+    const playerId = req.params.playerId
     try {
-        const result: QueryResult = await pool.query(
-            'SELECT * FROM player INNER JOIN join_player_bet_group jt ON jt.player_id = player.id ' +
-            'INNER JOIN bet_group ON jt.group_id = bet_group.id ' +
-            'WHERE bet_group.id = $1',
-            [groupId]
-        )
-
-        if (result.rows.length > 0) {
-            const players = result.rows as Player[];
-            res.status(200).json(players);
-        } else {
-            res.status(404).send(`No player found for the group with id ${groupId}`);
-        }
-    } catch (error) {
-        res.status(500).send(`Error while trying to retrieve players from group ${groupId}`);
+        const groups = await BetGroup
+            .find({
+                'players': {$in: playerId}
+            })
+            .exec();
+        res.status(200).json(groups);
+    } catch (error: any) {
+        res.status(500).send(`Error while trying to retrieve groups for player ${playerId}: ${error.message}` )
     }
 }
 
 export async function postPlayer(req: Request, res: Response) {
     try {
         const {name} = req.body;
-        await pool.query(
-            'INSERT INTO player(name) VALUES ($1)',
-            [name]
-        )
-        res.status(200).json('Player created');
-    } catch (e) {
-        console.error(e);
-        res.status(500).send(`Error while trying to create new player`)
+        const exists = await Player.exists({name: name})
+        if (exists) {
+            res.status(400).json({error: "Player already exists"})
+            return;
+        }
+        const player = await Player.create({name: name})
+        res.status(200).json(player);
+    } catch (e: any) {
+        res.status(500).send(`Error while trying to create new player: ` + e.message)
     }
 }

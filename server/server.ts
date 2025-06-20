@@ -3,11 +3,21 @@ import cors from 'cors';
 import groupRoutes from "./src/routes/groupRoutes";
 import betRoutes from "./src/routes/betRoutes";
 import playerRoutes from "./src/routes/playerRoutes";
+import raceRoutes from "./src/routes/raceRoutes";
+import dotenv from "dotenv";
+import {connectDB} from "./src/db";
+import driverRoutes from "./src/routes/driverRoutes";
+
 const corsOptions = {
 }
 
+dotenv.config();
+
 const app = express();
 const port = 3001;
+
+//MONGO CONNECTION
+connectDB()
 
 // MIDDLEWARES
 app.use(cors(corsOptions));
@@ -18,6 +28,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use("/group", groupRoutes)
 app.use("/bet", betRoutes)
 app.use("/player", playerRoutes)
+app.use("/race", raceRoutes)
+app.use("/driver", driverRoutes)
 
 // GUARD ROUTES
 app.use((req, res, next) => {
